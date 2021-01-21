@@ -33,7 +33,9 @@ class KFlash:
         else:
             print(*args, **kwargs)
 
-    def process(self, terminal=True, dev="", baudrate=1500000, board=None, sram = False, file="", callback=None, noansi=False, terminal_auto_size=False, terminal_size=(50, 1), slow_mode = False, addr=None, length=None):
+    def process(self, terminal=True, dev="", baudrate=1500000, board=None, sram = False, file="",
+        callback=None, noansi=False, terminal_auto_size=False, terminal_size=(50, 1),
+        slow_mode = False, addr=None, length=None, keygen = False):
         self.killProcess = False
         BASH_TIPS = dict(NORMAL='\033[0m',BOLD='\033[1m',DIM='\033[2m',UNDERLINE='\033[4m',
                             DEFAULT='\033[0m', RED='\033[31m', YELLOW='\033[33m', GREEN='\033[32m',
@@ -1187,6 +1189,8 @@ class KFlash:
             parser.add_argument("-S", "--Slow",required=False, help="Slow download mode", default=False)
             parser.add_argument("-A", "--addr",required=False, help="flash addr", type=str, default="-1")
             parser.add_argument("-L", "--length",required=False, help="flash addr", type=str, default="-1")
+            parser.add_argument("-g", "--keygen",required=False, help="is it keygen mode", default=False)
+
             parser.add_argument("firmware", help="firmware bin path")
             args = parser.parse_args()
         else:
@@ -1204,6 +1208,7 @@ class KFlash:
             setattr(args, "Slow", False)
             setattr(args, "addr", -1)
             setattr(args, "length", -1)
+            setattr(args, "keygen", False)
 
         # udpate args for none terminal call
         if not terminal:
@@ -1216,6 +1221,7 @@ class KFlash:
             args.Slow = slow_mode
             args.addr = addr
             args.length = length
+            args.keygen = keygen
 
         if args.Board == "maixduino" or args.Board == "bit_mic":
             args.Board = "goE"
@@ -1432,6 +1438,17 @@ class KFlash:
 
         # Boot the code from SRAM
         self.loader.boot()
+        if args.keygen:
+            self.loader._port.baudrate = 115200
+            s0 = self.loader._port.readline()
+            s1 = self.loader._port.readline()
+            #KFlash.log(INFO_MSG, s0.decode("gb2312"))
+            # KFlash.log(INFO_MSG, s1.decode("gb2312"))  #machine code
+            code = s1.decode("gb2312")
+            if len(code) != 35:
+                return ""
+            else:
+                return code[:32]
         if args.sram:
             # Dangerous, here are dinosaur infested!!!!!
             # Don't touch this code unless you know what you are doing
@@ -1535,6 +1552,8 @@ class KFlash:
 
         if(args.terminal == True):
             open_terminal(True)
+
+        return 0
 
     def kill(self):
         if self.loader:
