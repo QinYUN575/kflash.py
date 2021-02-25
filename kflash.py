@@ -1103,7 +1103,6 @@ class KFlash:
             def flash_firmware(self, firmware_bin, aes_key = None, address_offset = 0, sha256Prefix = True, filename = ""):
                 # type: (bytes, bytes, int, bool) -> None
                 # Don't remove above code!
-
                 #KFlash.log('[DEBUG] flash_firmware DEBUG: aeskey=', aes_key)
 
                 if sha256Prefix == True:
@@ -1522,15 +1521,21 @@ class KFlash:
                     raise_exception( Exception(err) )
                 self.loader.flash_erase(addr, length)
             else:
+                sha256PrefixFlag = False
+                if self.isFirmware(args.firmware):
+                    sha256PrefixFlag = True
+                if args.addr.lower().startswith("0x"):
+                    addr = int(args.addr, base=16)
+                else:
+                    addr = int(args.addr)
                 with open(args.firmware, 'rb') as firmware_bin:
                     if args.key:
                         aes_key = binascii.a2b_hex(args.key)
                         if len(aes_key) != 16:
                             raise_exception( ValueError('AES key must by 16 bytes') )
-
-                        self.loader.flash_firmware(firmware_bin.read(), aes_key=aes_key)
+                        self.loader.flash_firmware(firmware_bin.read(), address_offset=addr, aes_key=aes_key, sha256Prefix = sha256PrefixFlag)
                     else:
-                        self.loader.flash_firmware(firmware_bin.read())
+                        self.loader.flash_firmware(firmware_bin.read(), address_offset=addr, sha256Prefix = sha256PrefixFlag)
 
         # 3. boot
         if args.Board == "dan" or args.Board == "bit" or args.Board == "trainer":
@@ -1554,6 +1559,16 @@ class KFlash:
             open_terminal(True)
 
         return 0
+
+    def isFirmware(self, file):
+        firmware_start_bytes = [b'\x21\xa8', b'\xef\xbe', b'\xad\xde']
+        firmware_start_bytes_lenght = 6
+        fp = open(file, "rb")
+        start_bytes = fp.read(firmware_start_bytes_lenght)
+        for flags in firmware_start_bytes:
+            if flags not in start_bytes:
+                return False
+        return True
 
     def kill(self):
         if self.loader:
