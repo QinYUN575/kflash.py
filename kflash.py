@@ -1186,7 +1186,7 @@ class KFlash:
             parser.add_argument("-s", "--sram", help="Download firmware to SRAM and boot", default=False, action="store_true")
             parser.add_argument("-B", "--Board",required=False, type=str, help="Select dev board, e.g. kd233, dan, bit, goD, goE or trainer")
             parser.add_argument("-S", "--Slow",required=False, help="Slow download mode", default=False)
-            parser.add_argument("-A", "--addr",required=False, help="flash addr", type=str, default="-1")
+            parser.add_argument("-A", "--addr",required=False, help="flash addr", type=str, default="0")
             parser.add_argument("-L", "--length",required=False, help="flash addr", type=str, default="-1")
             parser.add_argument("-g", "--keygen",required=False, help="is it keygen mode", default=False)
 
@@ -1205,7 +1205,7 @@ class KFlash:
             setattr(args, "sram", False)
             setattr(args, "Board", None)
             setattr(args, "Slow", False)
-            setattr(args, "addr", -1)
+            setattr(args, "addr", "0")
             setattr(args, "length", -1)
             setattr(args, "keygen", False)
 
